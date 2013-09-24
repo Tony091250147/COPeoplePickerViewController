@@ -99,7 +99,7 @@ COSynth(person)
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"<%@ title: '%@'; person: '%@'>",
-          NSStringFromClass(isa), self.title, self.person];
+          NSStringFromClass(self.class), self.title, self.person];
 }
 
 @end
@@ -177,7 +177,9 @@ COSynth(shadowLayer)
   self.navigationItem.rightBarButtonItem = rightItem;
 }
 
-- (void)viewDidLoad {  
+#define IOS7_OFFSET 20
+- (void)viewDidLoad {
+    self.wantsFullScreenLayout = YES;
   // Configure content view
   self.view.backgroundColor = [UIColor colorWithRed:0.859 green:0.886 blue:0.925 alpha:1.0];
   
@@ -185,16 +187,19 @@ COSynth(shadowLayer)
   CGRect viewBounds = self.view.bounds;
   CGRect tokenFieldFrame = CGRectMake(0, 0, CGRectGetWidth(viewBounds), 44.0);
   
+  
+    
   self.tokenField = [[COTokenField alloc] initWithFrame:tokenFieldFrame];
   self.tokenField.tokenFieldDelegate = self;
+//    self.tokenField.backgroundColor = [UIColor blackColor];
   self.tokenField.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
   [self.tokenField addObserver:self forKeyPath:kTokenFieldFrameKeyPath options:NSKeyValueObservingOptionInitial | NSKeyValueObservingOptionNew context:nil];
   
   // Configure search table
   self.searchTableView = [[UITableView alloc] initWithFrame:CGRectMake(0,
-                                                                       CGRectGetMaxY(self.tokenField.bounds),
+                                                                       CGRectGetMaxY(self.tokenField.bounds)+IOS7_OFFSET,
                                                                        CGRectGetWidth(viewBounds),
-                                                                       CGRectGetHeight(viewBounds) - CGRectGetHeight(tokenFieldFrame))
+                                                                       CGRectGetHeight(viewBounds) - CGRectGetHeight(tokenFieldFrame)-IOS7_OFFSET)
                                                       style:UITableViewStylePlain];
   self.searchTableView.opaque = NO;
   self.searchTableView.backgroundColor = [UIColor whiteColor];
@@ -204,8 +209,8 @@ COSynth(shadowLayer)
   self.searchTableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
   
   // Create the scroll view
-  self.tokenFieldScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(viewBounds), self.tokenField.computedRowHeight)];
-  self.tokenFieldScrollView.backgroundColor = [UIColor whiteColor];
+  self.tokenFieldScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, IOS7_OFFSET, CGRectGetWidth(viewBounds), self.tokenField.computedRowHeight)];
+  self.tokenFieldScrollView.backgroundColor = [UIColor orangeColor];
   
   [self.view addSubview:self.searchTableView];
   [self.view addSubview:self.tokenFieldScrollView];
@@ -230,6 +235,10 @@ COSynth(shadowLayer)
   // Subscribe to keyboard notifications
   NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
   [nc addObserver:self selector:@selector(keyboardDidShow:) name:UIKeyboardDidShowNotification object:nil];
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7)
+    {
+        self.edgesForExtendedLayout = UIRectEdgeNone;
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -240,16 +249,17 @@ COSynth(shadowLayer)
 - (void)layoutTokenFieldAndSearchTable {
   CGRect bounds = self.view.bounds;
   CGRect tokenFieldBounds = self.tokenField.bounds;
-  CGRect tokenScrollBounds = tokenFieldBounds;
+//  CGRect tokenScrollBounds = tokenFieldBounds;
+    CGRect tokenScrollBounds = CGRectMake(0, IOS7_OFFSET, tokenFieldBounds.size.width, tokenFieldBounds.size.height);
   
   self.tokenFieldScrollView.contentSize = tokenFieldBounds.size;
   
   CGFloat maxHeight = [self.tokenField heightForNumberOfRows:5];
   if (!self.searchTableView.hidden) {
-    tokenScrollBounds = CGRectMake(0, 0, CGRectGetWidth(bounds), [self.tokenField heightForNumberOfRows:1]);
+    tokenScrollBounds = CGRectMake(0, IOS7_OFFSET, CGRectGetWidth(bounds), [self.tokenField heightForNumberOfRows:1]);
   }
   else if (CGRectGetHeight(tokenScrollBounds) > maxHeight) {
-    tokenScrollBounds = CGRectMake(0, 0, CGRectGetWidth(bounds), maxHeight);  
+    tokenScrollBounds = CGRectMake(0, IOS7_OFFSET, CGRectGetWidth(bounds), maxHeight);
   }
   [UIView animateWithDuration:0.25 animations:^{
     self.tokenFieldScrollView.frame = tokenScrollBounds;
@@ -788,12 +798,13 @@ COSynth(container)
                                  titleSize.width,
                                  titleSize.height);
   
-  [self.title drawInRect:titleFrame withFont:titleFont lineBreakMode:UILineBreakModeTailTruncation alignment:UITextAlignmentCenter];
+//  [self.title drawInRect:titleFrame withFont:titleFont lineBreakMode:UILineBreakModeTailTruncation alignment:UITextAlignmentCenter];
+    [self.title drawInRect:titleFrame withFont:titleFont lineBreakMode:NSLineBreakByTruncatingTail alignment:NSTextAlignmentCenter];
 }
 
 - (NSString *)description {
   return [NSString stringWithFormat:@"<%@ title: '%@'; associatedObj: '%@'>",
-          NSStringFromClass(isa), self.title, self.associatedObject];
+          NSStringFromClass(self.class), self.title, self.associatedObject];
 }
 
 @end
